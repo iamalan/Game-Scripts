@@ -33,8 +33,7 @@ function Awake() {
 	var rotation = Quaternion.identity;
 	// Assign a rotation 30 degrees around the y axis
 	rotation.eulerAngles = Vector3(-90, 90, 0);
-	
-	Debug.Log("In Awake");
+
 
 	currPlatform = Instantiate(firstPlatform, Vector3 (0,0,player.position.z), rotation) as GameObject;
 	isSpawned = false;
@@ -72,20 +71,20 @@ function Update() {
 
 function InstantiatePlatform() {
 
-	var randIndex = Mathf.Floor(Random.Range(0, 3.001));
+	var randIndex = Mathf.Floor(Random.Range(0, 2.99));
 		
 	//var randomRotation = Quaternion.Euler(0,angles[indexAngle],0);
 	
 	var rotation = Quaternion.identity;
+	
 	// Assign a rotation 90 degrees around the y and x axis
 	rotation.eulerAngles = Vector3(-90, 90, 0);
 	
-	if( terrainObjects[randIndex].name == "RightTurnNew" ){
-		Debug.Log("RIGHT TURN COMING UP!");	
-	}
+	Debug.Log("randIndex: " + randIndex);	
 
 	prevPlatform = currPlatform;
-	currPlatform = Instantiate(terrainObjects[randIndex], new Vector3(destroyCurrent.transform.position.x,destroyCurrent.transform.position.y, destroyCurrent.transform.position.z), destroyCurrent.transform.rotation);
+	currPlatform = Instantiate(terrainObjects[randIndex], new Vector3(destroyCurrent.transform.position.x,0, destroyCurrent.transform.position.z), destroyCurrent.transform.rotation);
+	//currPlatform.transform.localRotation = destroyCurrent.transform.rotation;
 	//nextPlatform = Instantiate(terrainObjects[1], new Vector3(0,0,destroyCurrent.transform.position.z + 400), rotation);
     isSpawned = true;
 }
