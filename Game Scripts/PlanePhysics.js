@@ -1,12 +1,12 @@
 #pragma strict
 
 var planeVel = Vector3(0,0,50);
+var target : GameObject;
 var joyButton : Joystick;
-var speed : float = 0.1; 
 var hitNoise : AudioClip;
-var followTerrain : boolean;
-
-
+var currTargetPos : Vector3;
+var prevTargetPos : Vector3;
+var damping = 6.0;
 
 function Awake () {
 
@@ -17,6 +17,7 @@ function Start() {
 
 	//Local Coords
 	rigidbody.velocity = transform.TransformDirection(planeVel);
+	target = GameObject.FindWithTag ("Target");
 	
 	//Global coords
 	//rigidbody.velocity= planeVel;
@@ -34,23 +35,19 @@ function Update () {
     	//rigidbody.AddRelativeTorque(1,0,0);
     }
     	
-    //define a vector to point "right"
-    var right = transform.TransformDirection (Vector3.right);
-    //hitInfo stores what the raycast has hit
-    var hitInfo : RaycastHit;
-    //Cast a ray to the right and store in hitinfo
-    Physics.Raycast (transform.position, right, hitInfo, Mathf.Infinity);
-    //set the plane's x pos and use offset	
-    transform.position.x = hitInfo.point.x - 30;
-    
-    	
 }
 
 
 
 function CalcSpeed(){
-	//Speed reduces with increasing altitude, required to put the +1 to avoid inf speed
-	rigidbody.velocity = transform.TransformDirection(planeVel)/(0.05*rigidbody.position.y+1);
+
+	var rotation = Quaternion.LookRotation(target.transform.position - transform.position);
+	transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * damping);
+
+//	var smoothLookAt = Vector3.Lerp(prevTargetPos, currTargetPos, Time.time);
+//	transform.LookAt(smoothLookAt);
+//	prevTargetPos = currTargetPos;
+
 }
 
 function OnCollisionEnter(){
