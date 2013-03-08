@@ -22,16 +22,16 @@ function Update () {
 	Debug.DrawRay(transform.position, -this.transform.right*100,Color.blue);
 	Debug.DrawRay(transform.position, this.transform.right*100,Color.blue);
 	
-	var currMidHit = (rightHit.point + leftHit.point)/2.0;
+	var currMidHit = (rightHit.point.x + leftHit.point.x)/2.0;
 	var aheadMidHit = (aheadRightHit.point + aheadLeftHit.point)/2.0;
-	var slopeVec = aheadMidHit - currMidHit;
+	//var slopeVec = aheadMidHit - currMidHit;
 	
 
-	transform.position.x = currMidHit.x;
-	transform.eulerAngles = Vector3(0, 1 , 0);
+	transform.position.x = currMidHit;
+	//transform.eulerAngles = Vector3(0, 1 , 0);
 	CalcSpeed();
 
-	Debug.Log("slopeVec: " +slopeVec);
+	//Debug.Log("slopeVec: " +slopeVec);
 }
 
 function CalcSpeed() {

@@ -1,7 +1,6 @@
 #pragma strict
 
 var planeVel = Vector3(0,0,50);
-var target : GameObject;
 var joyButton : Joystick;
 var hitNoise : AudioClip;
 var currTargetPos : Vector3;
@@ -10,18 +9,21 @@ var damping = 6.0;
 
 private var leftHit : RaycastHit;
 private var rightHit : RaycastHit;
+private var targets : GameObject[]; 
 
 function Awake () {
 
 	joyButton =  GameObject.Find("Single Joystick").GetComponent(Joystick);
+	
+	//Local Coords
+	rigidbody.velocity = transform.TransformDirection(planeVel);
+	targets = GameObject.FindGameObjectsWithTag("Target");
+	CalcRotation();
+	CalcSpeed();
 }
 
 function Start() {
 
-	//Local Coords
-	rigidbody.velocity = transform.TransformDirection(planeVel);
-	target = GameObject.FindWithTag ("Target");
-	
 	//Global coords
 	//rigidbody.velocity= planeVel;
 	
@@ -29,34 +31,46 @@ function Start() {
 function Update () {
 
 	CalcSpeed();
-	
-	if (Input.touchCount >= 1){ //&& Input.GetTouch(0).phase == TouchPhase.Moved) {
-         //Get movement of the finger since last frame
-        var touchDeltaPosition:Vector2 = Input.GetTouch(0).deltaPosition;
-       	rigidbody.AddRelativeTorque(-3*touchDeltaPosition.y,0,0);
-       	}else{
-    	//rigidbody.AddRelativeTorque(1,0,0);
-    }
-    
-    Physics.Raycast(transform.position, this.transform.right, rightHit, Mathf.Infinity);
-	Physics.Raycast(transform.position, -this.transform.right, leftHit, Mathf.Infinity);	
-	var currMidHit = (rightHit.point + leftHit.point)/2.0;
-	transform.position.x = currMidHit.x;
-    	
+	CalcRotation();
+	    	
 }
-
 
 
 function CalcSpeed(){
 
-	var rotation = Quaternion.LookRotation(target.transform.position - transform.position);
-	transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * damping);
-	transform.LookAt(target.transform);
+	rigidbody.velocity = transform.TransformDirection(planeVel);///(0.01*rigidbody.position.y+1);
 
-//	var smoothLookAt = Vector3.Lerp(prevTargetPos, currTargetPos, Time.time);
-//	transform.LookAt(smoothLookAt);
-//	prevTargetPos = currTargetPos;
+}
 
+function CalcRotation(){
+
+	targets = GameObject.FindGameObjectsWithTag("Target");
+
+ 
+    if (targets.length > 0) {
+        var closestTarget = targets[0];
+        var secondClosestTarget = targets[0];
+        
+        var dist = Vector3.Distance(transform.position, targets[0].transform.position);
+ 
+        for(var i=0; i<targets.Length; i++) {
+            var tempDist = Vector3.Distance(transform.position, targets[i].transform.position);
+            if(tempDist < dist) {
+            	secondClosestTarget = closestTarget;
+                closestTarget = targets[i];
+            }else if (tempDist < Vector3.Distance(transform.position, secondClosestTarget.transform.position) ) {
+            	secondClosestTarget = targets[i];
+            }
+            
+            Debug.Log("closestTarget: " + closestTarget.transform.position + "secondClosestTarget: " + secondClosestTarget.transform.position);
+            
+        }
+        
+        var rotation = Quaternion.LookRotation(closestTarget.transform.position - transform.position);
+		transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * damping);
+
+        
+    }
 }
 
 function OnCollisionEnter(){

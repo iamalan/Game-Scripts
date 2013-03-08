@@ -28,7 +28,7 @@ function Awake() {
 	// Assign a rotation 30 degrees around the y axis
 	rotation.eulerAngles = Vector3(-90, 90, 0);
 
-	currPlatform = Instantiate(firstPlatform, Vector3 (0,0,player.position.z+10), rotation) as GameObject;
+	currPlatform = Instantiate(firstPlatform, Vector3 (0,0,player.position.z), rotation) as GameObject;
 } 
  
 function Start() {
