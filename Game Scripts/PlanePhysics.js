@@ -8,6 +8,9 @@ var currTargetPos : Vector3;
 var prevTargetPos : Vector3;
 var damping = 6.0;
 
+private var leftHit : RaycastHit;
+private var rightHit : RaycastHit;
+
 function Awake () {
 
 	joyButton =  GameObject.Find("Single Joystick").GetComponent(Joystick);
@@ -34,6 +37,11 @@ function Update () {
        	}else{
     	//rigidbody.AddRelativeTorque(1,0,0);
     }
+    
+    Physics.Raycast(transform.position, this.transform.right, rightHit, Mathf.Infinity);
+	Physics.Raycast(transform.position, -this.transform.right, leftHit, Mathf.Infinity);	
+	var currMidHit = (rightHit.point + leftHit.point)/2.0;
+	transform.position.x = currMidHit.x;
     	
 }
 
@@ -43,6 +51,7 @@ function CalcSpeed(){
 
 	var rotation = Quaternion.LookRotation(target.transform.position - transform.position);
 	transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * damping);
+	transform.LookAt(target.transform);
 
 //	var smoothLookAt = Vector3.Lerp(prevTargetPos, currTargetPos, Time.time);
 //	transform.LookAt(smoothLookAt);
