@@ -1,5 +1,8 @@
 #pragma strict
 
-function OnTriggerEnter() {
+function OnTriggerEnter(other : Collider) {
+	
 	Destroy(transform.parent.gameObject);
+
+	print ("DESTROY DETECTED");
 }

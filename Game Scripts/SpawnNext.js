@@ -6,5 +6,7 @@ var terrainGen : TerrainGen;
 terrainGen = obja.GetComponent(typeof(TerrainGen)) as TerrainGen;
 
 function OnTriggerExit(other : Collider){
-		terrainGen.InstantiatePlatform();
+
+	terrainGen.InstantiatePlatform();
+	print("made a platform!");
 }
