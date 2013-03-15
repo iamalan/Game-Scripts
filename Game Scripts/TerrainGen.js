@@ -38,7 +38,7 @@ function Awake() {
 		}
 	}
 	
-	isSpawned = true;
+	isSpawned = true; 
 } 
 
 
