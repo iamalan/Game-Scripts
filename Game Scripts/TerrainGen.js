@@ -4,100 +4,107 @@
 */
 
 //Assuming the first terrain may be different
-public var firstPlatform : GameObject;
-
+public var numberOfPlatformsAhead : int = 5;
 public var player : Transform;
 
 //Seeing as a greater than condition will give the rise to multiple true conditions, we need a state
 var isSpawned : boolean;
- 
-//May need this
-public var spawnDistance : float;
 
-//Array to hold potential objects to be instantiated
-public var terrainObjects : GameObject[];
+//Array to hold potential objects to be instantiated, note that element 0 holds the first terrain that will be generated for that terrain family and the minimum number of elements is two
+//families differ with respect to "theme"
+public var familyOneTerrains : GameObject[];
+public var familyTwoTerrains : GameObject[];
 public var destroyPoints : GameObject[];
-public var spawnPoints : GameObject[];
 
-//The platform that was last created is stored as a gameobject so we can do stuff with it
-private var currPlatform : GameObject;
-private var prevPlatform : GameObject;
-private var nextPlatform : GameObject;
+//A queue seemed like the most logical idea here seeing as were FIFO for terrains
+public var platformQueue : Queue;
 
+//We'll be basing our terrain family state on number of generated terrains so far (not including the generated terrains in Awake()), e.g. if we are above say 5 then use familyTwoTerrains
+private static var generatedSoFar = 0;
 
 //Much cleaner when instantiated in awake
 function Awake() {
-	currPlatform = Instantiate(firstPlatform, Vector3 (0,0,0),   Quaternion.Euler(0, 0, 0));// as GameObject;
-	isSpawned = false;
+
+	platformQueue = new Queue();
+	
+	for ( var i=0; i<numberOfPlatformsAhead; i++ ) {
+		if ( i==0 ) {
+			var tempPlat = Instantiate(familyOneTerrains[0], Vector3(player.transform.position.x,0,player.transform.position.z), Quaternion.Euler(0, 0, 0));
+			platformQueue.Enqueue(tempPlat);
+		} else {
+			destroyPoints = GameObject.FindGameObjectsWithTag("DestroyPoint");
+			tempPlat = Instantiate(familyOneTerrains[Random.Range(1, familyOneTerrains.Length)], destroyPoints[FindFurthest()].transform.position, Quaternion.Euler(0, 0, 0));
+			platformQueue.Enqueue(tempPlat);
+		}
+	}
+	
+	isSpawned = true;
 } 
+
+
 
 function Update() {
 
-	//destroyCurrent = GameObject.FindWithTag ("DestroyPoint");
 	destroyPoints = GameObject.FindGameObjectsWithTag("DestroyPoint");
-	spawnPoints = GameObject.FindGameObjectsWithTag("SpawnPoint");
-
-    if (player.transform.position.z > spawnPoints[FindClosest(spawnPoints)].transform.position.z){
-          //Call instantiate only if there hasn't been a spawn yet
-          if (!isSpawned){
-          	InstantiatePlatform();
-          }
-    }
-   
-    //If the player has passed the DestroyCurrent point, then destroy the current platform
-    if(player.transform.position.z > destroyPoints[FindClosest(destroyPoints)].transform.position.z) {
-       //Destroy object 
-       Debug.Log("In Destroy");
-       Destroy(prevPlatform);
- 	   isSpawned = false;
-    }
-}
-
-
-function InstantiatePlatform() {
-
-	Debug.Log("INSTATIATE!");
-
-	var randIndex = Random.Range(0, 3);
-
-	prevPlatform = currPlatform;
-	currPlatform = Instantiate(terrainObjects[randIndex], destroyPoints[FindClosest(destroyPoints)].transform.position, Quaternion.Euler(0, 0, 0));
-	destroyPoints = GameObject.FindGameObjectsWithTag("DestroyPoint");
-	spawnPoints = GameObject.FindGameObjectsWithTag("SpawnPoint");
-	//nextPlatform = Instantiate(terrainObjects[randIndex], destroyPoints[FindFurthest(destroyPoints)].transform.position, Quaternion.Euler(0, 0, 0));
 	
-    isSpawned = true;
+	Debug.Log("generatedSoFar: " + generatedSoFar);
+	
+	if ( generatedSoFar == 5 ){
+		//Congratulate user?
+		//TODO: Family state change
+	}
+		
+	if( !isSpawned ){
+		var tempPlat = Instantiate(familyOneTerrains[Random.Range(1, familyOneTerrains.Length)], destroyPoints[FindFurthest()].transform.position, Quaternion.Euler(0, 0, 0));
+		platformQueue.Enqueue(tempPlat);
+		isSpawned= true;
+		generatedSoFar++;
+	}
+	
+	if( player.transform.position.z > destroyPoints[FindClosest()].transform.position.z){
+		Destroy(platformQueue.Peek());
+		platformQueue.Dequeue();
+		isSpawned= false;
+	}
+
 }
 
-function FindFurthest(points : GameObject[]) {
 
-	var dist = Vector3.Distance(player.transform.position, points[0].transform.position);
+
+function FindFurthest() {
+
+	destroyPoints = GameObject.FindGameObjectsWithTag("DestroyPoint");
+	
+	var furthestSoFar = Vector3.Distance(player.transform.position, destroyPoints[0].transform.position);
+	var indexLargest = 0;
+	
+    for(var i=1; i<destroyPoints.Length; i++) {
+    	var currDist = Vector3.Distance(player.transform.position, destroyPoints[i].transform.position);
+    	if (currDist > furthestSoFar) {
+        	furthestSoFar = currDist;
+        	indexLargest = i;
+    	}
+    }
+    
+    return indexLargest;
+}
+
+
+
+function FindClosest() {
+
+	destroyPoints = GameObject.FindGameObjectsWithTag("DestroyPoint");
+
+	var closestSoFar = Vector3.Distance(player.transform.position, destroyPoints[0].transform.position);
 	var indexSmallest = 0;
 	
-    for(var i=0; i<destroyPoints.Length; i++) {
-    	var currDist = Vector3.Distance(player.transform.position, points[i].transform.position);
-    	if (currDist > dist) {
-        	dist = currDist;
+    for(var i=1; i<destroyPoints.Length; i++) {
+    	var currDist = Vector3.Distance(player.transform.position, destroyPoints[i].transform.position);
+    	if (currDist < closestSoFar) {
+        	closestSoFar = currDist;
         	indexSmallest = i;
     	}
     }
     
-    return indexSmallest;
-}
-
-function FindClosest(points : GameObject[]) {
-
-	var dist = Vector3.Distance(player.transform.position, points[0].transform.position);
-	var indexSmallest = 0;
-	
-    for(var i=0; i<destroyPoints.Length; i++) {
-    	var currDist = Vector3.Distance(player.transform.position, points[i].transform.position);
-    	if (currDist < dist) {
-        	dist = currDist;
-        	indexSmallest = i;
-    	}
-    }
-    
-    Debug.Log("Closest " + points[indexSmallest] + " is at index: " + indexSmallest);
     return indexSmallest;
 }
