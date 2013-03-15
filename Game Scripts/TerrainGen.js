@@ -6,6 +6,7 @@
 //Assuming the first terrain may be different
 public var numberOfPlatformsAhead : int = 5;
 public var player : Transform;
+public var cameraThreshold : float = 10;
 
 //Seeing as a greater than condition will give the rise to multiple true conditions, we need a state
 var isSpawned : boolean;
@@ -61,7 +62,7 @@ function Update() {
 		generatedSoFar++;
 	}
 	
-	if( player.transform.position.z > destroyPoints[FindClosest()].transform.position.z){
+	if( player.transform.position.z > destroyPoints[FindClosest()].transform.position.z + cameraThreshold){
 		Destroy(platformQueue.Peek());
 		platformQueue.Dequeue();
 		isSpawned= false;
