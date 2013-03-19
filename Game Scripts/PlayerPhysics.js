@@ -1,8 +1,13 @@
+/*
+ Player Physics
+ 2Beans 
+*/
+
 #pragma strict
 
 var playerVel = 50.0;
 var smoothTransition = 5.0;
-var railPoints : Vector2[,] =  new Vector2[3, 3];
+var railPoints : Vector2[,] = new Vector2[3, 3];
 var spacingX : int;
 var spacingY : int;
 private var i : int = 1;
@@ -55,8 +60,19 @@ public function MoveUpOne() {
 
 function CalcSpeed() {
 
+	//Variable to store the last position of i, we'll use these later to avoid lerping to the same spot
+	var iLast : int;
+	var jLast : int;
+	
 	rigidbody.velocity = Vector3(0,0,playerVel);
-	rigidbody.position = Vector3.Lerp(transform.position, Vector3(railPoints[i,j].x, railPoints[i,j].y, transform.position.z), Time.deltaTime*smoothTransition);
+	
+	//Why change position if we don't need to?
+	if(iLast!=i || jLast!=j ){
+		rigidbody.position = Vector3.Lerp(transform.position, Vector3(railPoints[i,j].x, railPoints[i,j].y, transform.position.z), Time.deltaTime*smoothTransition);
+	}
+	
+	iLast = i;
+	jLast = j;
 
 }
 
@@ -70,13 +86,6 @@ function GetRailsPoints() {
 	railPoints[2, 0]= new Vector2(transform.position.x - spacingX, transform.position.y - spacingY);
 	railPoints[2, 1]= new Vector2(transform.position.x, transform.position.y - spacingY);
 	railPoints[2, 2]= new Vector2(transform.position.x + spacingX, transform.position.y - spacingY);
-	
-	
-//	for (var i=0; i<3; i++){
-//		for (var j=0; j<3; j++){
-//			railPoints[i, j]= new Vector2(railPoints[i,j].x+spacing*i, railPoints[i,j].y+spacing*j);
-//		}
-//	}
 }
 
 
