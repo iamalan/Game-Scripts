@@ -21,7 +21,6 @@ function Start () {
 
 function Update () {
 
-//	Debug.DrawRay(Vector3(railPoints[0,1].x,railPoints[0,1].y,transform.position.z), Vector3.forward*99, Color.red);
 	CalcSpeed();
 	
 	Debug.DrawRay(transform.position, Vector3.forward*30, Color.red);
@@ -34,25 +33,26 @@ function Update () {
 }
 
 function AvoidObstacle() {
-		Debug.Log("CALLED AVOID");
-		//The AI to move the target is quite simple. From the 9 railPoints, we need to choose one of the possible railPoint(s) that doesn't have any collision with a raycast
-		//Algorithim: Loop through all railPoints, "mark" the ones that when raycasted, don't hit with anything, then choose a random railPoint from the marked railPoints
-		
-		//Array to store all the potential is and js that can be maneuvered to
-		var openRails : Vector2[,] = new Vector2[9, 2];
-		
-		for (var i=0;i<3;i++){
-			for (var j=0;j<3;j++){
-				var rayAhead = Physics.Raycast(Vector3(railPoints[i,j].x, railPoints[i,j].y, transform.position.z), transform.TransformDirection (Vector3.forward), 30);
-				if (!rayAhead) {
-        			Debug.Log("FOUND OPENING i= " + i + " and j= " + j);
-        			var iM = i;
-        			var jM = j;
-    			}	
-			}
+	//The AI to move the target is quite simple. From the 9 railPoints, we need to choose one of the possible railPoint(s) that doesn't have any collision with a raycast
+	//Algorithim: Loop through all railPoints, "mark" the ones that when raycasted, don't hit with anything, then choose a random railPoint from the marked railPoints
+	
+	//Array to store all the potential is and js that can be maneuvered to
+	var openRails : Vector2[,] = new Vector2[9, 2];
+	
+	for (var i=0;i<3;i++){
+		for (var j=0;j<3;j++){
+			var rayAhead = Physics.Raycast(Vector3(railPoints[i,j].x, railPoints[i,j].y, transform.position.z), transform.TransformDirection (Vector3.forward), 30);
+			if (!rayAhead) {
+    			Debug.Log("FOUND OPENING i= " + i + " and j= " + j);
+    			//For now I'm just overwriting iM and jM, soon there will be a list that grows and shrinks depending on number of available rails
+    			var iM = i;
+    			var jM = j;
+			}	
 		}
-		
-		MoveTo(iM,jM);
+	}
+	
+	//TODO: Chose random potential rail
+	MoveTo(iM,jM);
 }
 
 function MoveTo(iM : int, jM : int) {
