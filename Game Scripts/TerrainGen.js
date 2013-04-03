@@ -13,12 +13,14 @@ public var cameraThreshold : float = 10;
 var isSpawned : boolean;
 
 //Array to hold potential objects to be instantiated, note that element 0 holds the first terrain that will be generated for that terrain family and the minimum number of elements is two
-//families differ with respect to "theme"
+//families differ with respect to "theme" - only true for familyOne though
 public var familyOneTerrains : GameObject[];
 public var familyTwoTerrains : GameObject[];
+public var familyThreeTerrains : GameObject[];
 public var destroyPoints : GameObject[];
-//This number is used to decide WHEN to change - its a user input choose whole numbers
-public var familyStateChange : int;
+//Use these number to decide WHEN to change - its a user input choose whole numbers
+public var familyOneStateChange : int;
+public var familyTwoStateChange : int;
 
 //A queue seemed like the most logical idea here seeing as were FIFO for terrains
 public var platformQueue : Queue;
@@ -59,6 +61,17 @@ function Awake() {
 				shifter++;
 			}
 	}
+	
+	//Make the terrainPoolThree. This will hold all the possible terrains however they will all be inactive. In start we will chose numberOfPlatformsAhead number to activate
+ 	terrainPoolThree = new GameObject[numberOfPlatformsRepeats*familyThreeTerrains.Length]; 
+	for ( i=0; i<familyThreeTerrains.Length; i++ ) {
+			for ( j=0; j<numberOfPlatformsRepeats; j++ ){
+				tempPlat = Instantiate(familyThreeTerrains[i], Vector3(player.transform.position.x,0,player.transform.position.z + shifter*10), Quaternion.Euler(0, 0, 0));
+				terrainPoolThree[numberOfPlatformsRepeats*i+j]= tempPlat;
+				terrainPoolThree[numberOfPlatformsRepeats*i+j].active = false;
+				shifter++;
+			}
+	}
 	isSpawned = true; 
 } 
 
@@ -94,10 +107,13 @@ function Update() {
 
 	destroyPoints = GameObject.FindGameObjectsWithTag("DestroyPoint");
 
-	//Every familyStateChange number of times, we switch to using other terrainPool
-	if ( generatedSoFar%familyStateChange == 0 ){
+	//Every familyStateOneChange number of times, we switch to using other terrainPool same
+	if ( generatedSoFar%familyOneStateChange == 0 ){
 		//Congratulate user?
 		UpdateFamilyState();
+		if ( generatedSoFar%familyTwoStateChange == 0 ){
+			//Will be added when the familythree state change condition is decided
+		}
 		generatedSoFar++;
 	}
 		
