@@ -1,78 +1,99 @@
-/*
- Player Physics
- 2Beans 
-*/
-
 #pragma strict
 
-var playerVel = 50.0;
-var smoothTransition = 5.0;
-var railPoints : Vector2[,] = new Vector2[3, 3];
-var spacingX : int;
-var spacingY : int;
+public static var playerVel : float;
+public var spacingX : int;
+public var spacingY : int;
+public var lockOnRange : int;
+private var smoothTransition = 5.0;
+public static var railPoints : Vector2[,] =  new Vector2[3, 3];
 private var i : int = 1;
 private var j : int = 1;
-
+public static var player : GameObject;
+private var target : GameObject;
+public var missile : GameObject;
+private var playerWingDeflectorL : GameObject;
+private var playerWingDeflectorR : GameObject;
+private var playerElevonDeflectorL : GameObject;
+private var playerElevonDeflectorR : GameObject;
+public static var isFired : boolean;
 
 function Start () {
 	GetRailsPoints();
 	rigidbody.velocity = Vector3(0,0,playerVel);
+	
+	player = GameObject.FindGameObjectWithTag('PlayerObject');
+	target = GameObject.FindGameObjectWithTag('TargetObject');
+	
+	isFired = false;
+	
+	playerVel = 600;
+	
+	playerWingDeflectorL = GameObject.FindGameObjectWithTag('PlayerWingDeflectorL');
+	playerWingDeflectorR = GameObject.FindGameObjectWithTag('PlayerWingDeflectorR');
+	playerElevonDeflectorL = GameObject.FindGameObjectWithTag('PlayerElevonDeflectorL');
+	playerElevonDeflectorR = GameObject.FindGameObjectWithTag('PlayerElevonDeflectorR');
+	
 }
 
 function Update () {
+
 	CalcSpeed();
-	Debug.DrawRay(Vector3(railPoints[0,0].x,railPoints[0,0].y,transform.position.z), Vector3.forward*99, Color.green);
-	Debug.DrawRay(Vector3(railPoints[0,1].x,railPoints[0,1].y,transform.position.z), Vector3.forward*99, Color.green);
-	Debug.DrawRay(Vector3(railPoints[0,2].x,railPoints[0,2].y,transform.position.z), Vector3.forward*99, Color.green);
-	Debug.DrawRay(Vector3(railPoints[1,0].x,railPoints[1,0].y,transform.position.z), Vector3.forward*99, Color.green);
-	Debug.DrawRay(Vector3(railPoints[1,1].x,railPoints[1,1].y,transform.position.z), Vector3.forward*99, Color.green);
-	Debug.DrawRay(Vector3(railPoints[1,2].x,railPoints[1,2].y,transform.position.z), Vector3.forward*99, Color.green);
-	Debug.DrawRay(Vector3(railPoints[2,0].x,railPoints[2,0].y,transform.position.z), Vector3.forward*99, Color.green);
-	Debug.DrawRay(Vector3(railPoints[2,1].x,railPoints[2,1].y,transform.position.z), Vector3.forward*99, Color.green);
-	Debug.DrawRay(Vector3(railPoints[2,2].x,railPoints[2,2].y,transform.position.z), Vector3.forward*99, Color.green);
+	target = GameObject.FindGameObjectWithTag('TargetObject');
+
+	
+	if (target && !TargetPhysics.isNewTarget) {
+
+		ArmMissile();
+	}
 }
 
 public function MoveLeftOne() {
 	if(j<=2 && j>0){
 		j--;
+		playerWingDeflectorL.animation.Play("player_wingdeflectL_down");
+		playerWingDeflectorR.animation.Play("player_wingdeflectR_up");
+		
+		player.animation.Play("player_left");
+		
+		
 	}
-	Debug.Log("In MoveLeftOne & j: " + j + " and i: " + i);
 }
 public function MoveRightOne() {
 	if(j<2 && j>=0){
 		j++;
+		playerWingDeflectorL.animation.Play("player_wingdeflectL_up");
+		playerWingDeflectorR.animation.Play("player_wingdeflectR_down");
+		
+		player.animation.Play("player_right");
+		
 	}
-	Debug.Log("In MoveRightOne & j: " + j + " and i: " + i);
 }
 public function MoveDownOne() {
 	if(i<2 && i>=0){
 		i++;
+		playerElevonDeflectorL.animation.Play("player_elevonL_up");
+		playerElevonDeflectorR.animation.Play("player_elevonR_up");
+		player.animation.Play("player_down");
+		
+		
 	}
-	Debug.Log("In MoveDownOne & i: " + i + " and j: " + j);
 }
 public function MoveUpOne() {
 	if(i<=2 && i>0){
 		i--;
+		
+		playerElevonDeflectorL.animation.Play("player_elevonL_down");
+		playerElevonDeflectorR.animation.Play("player_elevonR_down");
+		player.animation.Play("player_up");
 	}
-	Debug.Log("In MoveUpOne & i: " + i + " and j: " + j);
 }
 
 
 function CalcSpeed() {
 
-	//Variable to store the last position of i, we'll use these later to avoid lerping to the same spot
-	var iLast : int;
-	var jLast : int;
-	
 	rigidbody.velocity = Vector3(0,0,playerVel);
-	
-	//Why change position if we don't need to?
-	if(iLast!=i || jLast!=j ){
-		rigidbody.position = Vector3.Lerp(transform.position, Vector3(railPoints[i,j].x, railPoints[i,j].y, transform.position.z), Time.deltaTime*smoothTransition);
-	}
-	
-	iLast = i;
-	jLast = j;
+	rigidbody.position = Vector3.Lerp(transform.position, Vector3(railPoints[i,j].x, railPoints[i,j].y, transform.position.z), Time.deltaTime*smoothTransition);
+
 
 }
 
@@ -86,6 +107,18 @@ function GetRailsPoints() {
 	railPoints[2, 0]= new Vector2(transform.position.x - spacingX, transform.position.y - spacingY);
 	railPoints[2, 1]= new Vector2(transform.position.x, transform.position.y - spacingY);
 	railPoints[2, 2]= new Vector2(transform.position.x + spacingX, transform.position.y - spacingY);
+}
+
+function ArmMissile() {
+
+	if (Mathf.Abs(player.transform.position.z-target.transform.position.z)<lockOnRange && Mathf.Abs(player.transform.position.y-target.transform.position.y)<lockOnRange && isFired==false){
+		KillMode.killMode = true;
+		
+		if(ScoreController.fireMissile){
+			Instantiate (missile, Vector3(player.transform.position.x+12.8,player.transform.position.y,player.transform.position.z+10), Quaternion.identity);
+			isFired = true;
+		}
+	}
 }
 
 

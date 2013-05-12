@@ -8,9 +8,10 @@ public var numberOfPlatformsAhead : int = 5;
 public var numberOfPlatformsRepeats : int = 3;
 public var player : Transform;
 public var cameraThreshold : float = 10;
+public var maxTokenPaths : int;
 
 //Seeing as a greater than condition will give the rise to multiple true conditions, we need a state
-var isSpawned : boolean;
+private var isSpawned : boolean;
 
 //Array to hold potential objects to be instantiated, note that element 0 holds the first terrain that will be generated for that terrain family and the minimum number of elements is two
 //families differ with respect to "theme" - only true for familyOne though
@@ -21,6 +22,7 @@ public var destroyPoints : GameObject[];
 //Use these number to decide WHEN to change - its a user input choose whole numbers
 public var familyOneStateChange : int;
 public var familyTwoStateChange : int;
+public var familyThreeStateChange : int;
 
 //A queue seemed like the most logical idea here seeing as were FIFO for terrains
 public var platformQueue : Queue;
@@ -29,16 +31,21 @@ public var terrainPoolTwo : GameObject[];
 public var terrainPoolThree : GameObject[];
 
 //We'll be basing our terrain family state on number of generated terrains so far (not including the generated terrains in Awake()), e.g. if we are above say 5 then use familyTwoTerrains
-public static var generatedSoFar = 0;
+public static var activatedSoFar = 0;
 
-private var terrainOneOn : boolean = true;
+private var familyOneOn : boolean = true;
+private var familyTwoOn : boolean = false;
+private var familyThreeOn : boolean = false;
+public static var menuTransition : boolean = true;
 
 //Much cleaner when instantiated in awake
 function Awake() {
-	
+
+	//Bounds check on user input	
 	if(numberOfPlatformsAhead>numberOfPlatformsRepeats*familyOneTerrains.Length){
 		numberOfPlatformsAhead = numberOfPlatformsRepeats*familyOneTerrains.Length-1;
 	}
+	
 	//Make the terrainPoolOne. This will hold all the possible terrains however they will all be inactive. In start we will chose numberOfPlatformsAhead number to activate
  	terrainPoolOne = new GameObject[numberOfPlatformsRepeats*familyOneTerrains.Length]; 
 	var shifter : int = 0;
@@ -77,76 +84,118 @@ function Awake() {
 
 function Start() {
 
-	platformQueue = new Queue();
+	activatedSoFar = 0;
+	//Choose two F1S1s to repeat 
+	var tempPlat = terrainPoolOne[0];
+	tempPlat.active = true;
+	var tempPlat2 = terrainPoolOne[1];
+	tempPlat2.active = true;
+	destroyPoints = GameObject.FindGameObjectsWithTag("DestroyPoint");
+	tempPlat.transform.position = Vector3(player.transform.position.x,0,player.transform.position.z);
+	tempPlat2.transform.position = destroyPoints[FindFurthest()].transform.position;
 	
-	//Activate random terrains in terrainPools
-	
-	for ( var i=0; i<numberOfPlatformsAhead; i++ ) {
-		if ( i==0 ) {
-			var tempPlat = terrainPoolOne[0];
-			tempPlat.active = true;
-			destroyPoints = GameObject.FindGameObjectsWithTag("DestroyPoint");
-			tempPlat.transform.position = Vector3(player.transform.position.x,0,player.transform.position.z);
-			platformQueue.Enqueue(tempPlat);
-		} else {
-			tempPlat = terrainPoolOne[Random.Range(1, terrainPoolOne.Length)];
-			while(tempPlat.active == true){
-				tempPlat = terrainPoolOne[Random.Range(1, terrainPoolOne.Length)];
-			}
-			destroyPoints = GameObject.FindGameObjectsWithTag("DestroyPoint");
-			tempPlat.transform.position = destroyPoints[FindFurthest()].transform.position;
-			tempPlat.active = true;
-			platformQueue.Enqueue(tempPlat);
-		}
-	}
-	
-	generatedSoFar++;
 }
+
+
 
 function Update() {
 
 	destroyPoints = GameObject.FindGameObjectsWithTag("DestroyPoint");
+	
+	if(MenuScreen.isMenu && !isSpawned ){
+		
+		var tempPlat = terrainPoolOne[0];
+		var tempPlat2 = terrainPoolOne[1];	
 
-	//Every familyStateOneChange number of times, we switch to using other terrainPool same
-	if ( generatedSoFar%familyOneStateChange == 0 ){
-		//Congratulate user?
+		destroyPoints[FindClosest()].gameObject.transform.parent.position = destroyPoints[FindFurthest()].transform.position;
+		
+		isSpawned = true;	
+	
+	}else if(!MenuScreen.isMenu && menuTransition) {
+		PopulateTerrainPoolOne();
+		menuTransition = false;
+	}else if (!MenuScreen.isMenu && !menuTransition){
+	
 		UpdateFamilyState();
-		if ( generatedSoFar%familyTwoStateChange == 0 ){
-			//Will be added when the familythree state change condition is decided
+			
+		if( !isSpawned && familyOneOn && !familyThreeOn && !familyTwoOn){
+			
+			//Choose the last terrain in the family which will always occur when activatedSoFar+1 is a multiple of familyStateChange 
+			if (familyOneStateChange == (activatedSoFar+1)) {
+				tempPlat = terrainPoolOne[terrainPoolOne.Length-1];
+			} else if ((activatedSoFar) == 1) {
+				tempPlat = terrainPoolOne[0];
+			} else {
+		 		tempPlat = terrainPoolOne[Random.Range(numberOfPlatformsRepeats, terrainPoolOne.Length-numberOfPlatformsRepeats-1)];
+				while(tempPlat.active == true){
+					tempPlat = terrainPoolOne[Random.Range(numberOfPlatformsRepeats, terrainPoolOne.Length-numberOfPlatformsRepeats-1)];
+				}
+		 	}
+	
+			tempPlat.transform.position = destroyPoints[FindFurthest()].transform.position;
+			tempPlat.active = true;
+			
+			GenerateTokens(tempPlat);
+			
+			isSpawned = true;
+			
+			activatedSoFar++;
+		} else if (!isSpawned && familyTwoOn && !familyOneOn && !familyThreeOn) {
+			
+			//Choose the last terrain in the family which will always occur when activatedSoFar+1 is a multiple of familyStateChange 
+			if ((familyTwoStateChange + familyOneStateChange) == (activatedSoFar+1)) {
+				tempPlat = terrainPoolTwo[terrainPoolTwo.Length-1];
+			} else if ((familyOneStateChange) == (activatedSoFar)) {
+				tempPlat = terrainPoolTwo[0];
+			} else {
+		 		tempPlat = terrainPoolTwo[Random.Range(numberOfPlatformsRepeats, terrainPoolTwo.Length-numberOfPlatformsRepeats-1)];
+		 		while(tempPlat.active == true){
+					tempPlat = terrainPoolTwo[Random.Range(numberOfPlatformsRepeats, terrainPoolTwo.Length-numberOfPlatformsRepeats-1)];
+				}
+		 	}
+	
+			tempPlat.transform.position = destroyPoints[FindFurthest()].transform.position;
+			tempPlat.active = true;
+			isSpawned= true;
+			
+			activatedSoFar++;
+		} else if (!isSpawned && familyThreeOn && !familyOneOn && !familyTwoOn) {
+			
+			//Choose the last terrain in the family which will always occur when activatedSoFar+1 is a multiple of familyStateChange 
+			if ((familyTwoStateChange + familyOneStateChange + familyThreeStateChange) == (activatedSoFar+1) ) {
+				tempPlat = terrainPoolThree[terrainPoolThree.Length-1];
+			} else if ((familyTwoStateChange + familyOneStateChange) == (activatedSoFar)) {
+				tempPlat = terrainPoolThree[0];
+			}  else {
+		 		tempPlat = terrainPoolThree[Random.Range(numberOfPlatformsRepeats, terrainPoolThree.Length-numberOfPlatformsRepeats-1)];
+		 		while(tempPlat.active == true){
+					tempPlat = terrainPoolThree[Random.Range(numberOfPlatformsRepeats, terrainPoolThree.Length-numberOfPlatformsRepeats-1)];
+				}
+		 	}
+			
+			
+			tempPlat.transform.position = destroyPoints[FindFurthest()].transform.position;
+			tempPlat.active = true;
+			isSpawned= true;
+			
+			activatedSoFar++;
 		}
-		generatedSoFar++;
-	}
-		
-	if( !isSpawned && terrainOneOn ){
-		var tempPlat = terrainPoolOne[Random.Range(1, terrainPoolOne.Length)];
-		while(tempPlat.active == true){
-			tempPlat = terrainPoolOne[Random.Range(1, terrainPoolOne.Length)];
-		}
-		tempPlat.transform.position = destroyPoints[FindFurthest()].transform.position;
-		tempPlat.active = true;
-		isSpawned= true;
-		
-		generatedSoFar++;
-	} else if(!isSpawned && !terrainOneOn) {
-		
-		tempPlat = terrainPoolTwo[Random.Range(0, terrainPoolTwo.Length)];
-		while(tempPlat.active == true){
-			tempPlat = terrainPoolTwo[Random.Range(0, terrainPoolTwo.Length)];
-		}
-		tempPlat.transform.position = destroyPoints[FindFurthest()].transform.position;
-		tempPlat.active = true;
-		isSpawned= true;
-		
-		generatedSoFar++;
+	
 	}
 
 }
 
 
 function LateUpdate(){
-	if( player.transform.position.z > destroyPoints[FindClosest()].transform.position.z + cameraThreshold ){
-		destroyPoints[FindClosest()].gameObject.transform.parent.active= false;
-		isSpawned= false;
+	if(MenuScreen.isMenu) {
+		if( player.transform.position.z > destroyPoints[FindClosest()].transform.position.z + cameraThreshold ){
+			isSpawned= false;
+		}
+	} else {
+		if( player.transform.position.z > destroyPoints[FindClosest()].transform.position.z + cameraThreshold ){
+			destroyPoints[FindClosest()].gameObject.transform.parent.active= false;
+			isSpawned= false;
+		}
 	}
 }
 
@@ -186,17 +235,69 @@ function FindClosest() {
     return indexSmallest;
 }
 
-function GenerateTokens() {
+function PopulateTerrainPoolOne() {
 
-
+		//Activate random terrains in terrainPools in family one
+		for ( var i=0; i<numberOfPlatformsAhead; i++ ) {
+				var tempPlat = terrainPoolOne[Random.Range(numberOfPlatformsRepeats, terrainPoolOne.Length-numberOfPlatformsRepeats-1)];
+				while(tempPlat.active == true){
+					tempPlat = terrainPoolOne[Random.Range(numberOfPlatformsRepeats, terrainPoolOne.Length-numberOfPlatformsRepeats-1)];
+				}
+				destroyPoints = GameObject.FindGameObjectsWithTag("DestroyPoint");
+				tempPlat.transform.position = destroyPoints[FindFurthest()].transform.position;
+				tempPlat.active = true;
+				
+				GenerateTokens(tempPlat);
+				activatedSoFar++;
+		}
+		
 }
 
 function UpdateFamilyState() {
-	Debug.Log("Just changed state");
-	if (terrainOneOn){
-		terrainOneOn = false;
-	} else{
-		terrainOneOn = true;
-	}
+
+	//We want to use these state changes so that the number represents how many times each family comes up before state change
+	//therefore if we want F1 to happen 6 times, F2 to happen 3 times and F3 to happen 4 times the change of 
+	//from F1->F2 will occur at 9, and from F2->F3 at 13 etc
+	//familyTwoStateChange =  familyTwoStateChange + familyOneStateChange;
+	//familyThreeStateChange = familyThreeStateChange + familyTwoStateChange;
 	
+	
+	//Every familyStateOneChange number of times, we switch to using other terrainPool
+	if (activatedSoFar < familyOneStateChange) {
+		familyOneOn = true;
+		familyTwoOn = false;
+		familyThreeOn = false;
+	} else if (activatedSoFar >= familyOneStateChange && activatedSoFar < (familyTwoStateChange + familyOneStateChange)) {
+		familyOneOn = false;
+		familyTwoOn = true;
+		familyThreeOn = false;
+	} else if (activatedSoFar >= (familyTwoStateChange + familyOneStateChange)  && activatedSoFar < (familyOneStateChange + familyThreeStateChange + familyTwoStateChange)) {
+		familyOneOn = false;
+		familyTwoOn = false;
+		familyThreeOn = true;		
+	} else {
+		activatedSoFar = 1;
+	}
+}
+
+function GenerateTokens( tempPlat:GameObject ) {
+		var count : int = Random.Range(0, maxTokenPaths);
+		
+		for ( var tokenGroup:Transform in tempPlat.transform ) {
+			if ( tokenGroup.tag == "Token") {
+				tokenGroup.gameObject.SetActive(false);
+				if(Random.Range(0,2) && count<maxTokenPaths){
+					tokenGroup.gameObject.SetActiveRecursively(true);
+					count++;
+				}	
+			}
+			
+			if ( tokenGroup.tag == "Boost") {
+				tokenGroup.gameObject.SetActive(false);
+				if( Random.Range(0,2) == 1 && Time.time > 1) {
+					tokenGroup.gameObject.SetActiveRecursively(true);
+				}
+			}
+		}
+
 }

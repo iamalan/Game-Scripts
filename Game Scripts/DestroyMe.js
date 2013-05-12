@@ -1,8 +1,9 @@
 #pragma strict
 
-function OnTriggerEnter(other : Collider) {
+function Update() {
 	
-	Destroy(transform.parent.gameObject);
-
-	print ("DESTROY DETECTED");
+	if(gameObject.particleSystem.isStopped){
+		GameObject.Destroy(gameObject);
+	}
+	
 }

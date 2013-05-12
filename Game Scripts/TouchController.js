@@ -39,23 +39,19 @@ function Update () {
         	    	if ((swipeTime < maxSwipeTime) && (swipeDist > minSwipeDist)) {
         	    		var swipeValueY : float = Mathf.Sign(touch.position.y - startPos.y);
 						var swipeValueX : float = Mathf.Sign(touch.position.x - startPos.x);
-						
+
 						if (startPos.x > touch.position.x && (Mathf.Abs(startPos.y-touch.position.y) < Mathf.Abs(startPos.x-touch.position.x))) {
                             lastSwipe = SwipeDirection.Left;
                             playerPhysics.MoveLeftOne();
-							Debug.Log("Found a swipe!  Direction: " + lastSwipe);
 						} else if (startPos.x < touch.position.x && (Mathf.Abs(startPos.y-touch.position.y) < Mathf.Abs(startPos.x-touch.position.x))) {
                             lastSwipe = SwipeDirection.Right;
                             playerPhysics.MoveRightOne();
-							Debug.Log("Found a swipe!  Direction: " + lastSwipe);
 						} else if (startPos.y < touch.position.y && (Mathf.Abs(startPos.x-touch.position.x) < Mathf.Abs(startPos.y-touch.position.y))) {
                             lastSwipe = SwipeDirection.Up;
                             playerPhysics.MoveUpOne();
-							Debug.Log("Found a swipe!  Direction: " + lastSwipe);
 						} else if (startPos.y > touch.position.y && (Mathf.Abs(startPos.x-touch.position.x) < Mathf.Abs(startPos.y-touch.position.y))) {
                             lastSwipe = SwipeDirection.Down;
                             playerPhysics.MoveDownOne();
-							Debug.Log("Found a swipe!  Direction: " + lastSwipe);
 						}
         	    	}	
         		}

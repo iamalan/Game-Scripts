@@ -5,7 +5,7 @@
 
 #pragma strict
 
-var targetVel = 200.0;
+public static var targetVel = 585.0;
 var smoothTransition = 5.0;
 var railPoints : Vector2[,] = new Vector2[3, 3];
 var spacingX : int;
@@ -13,29 +13,60 @@ var spacingY : int;
 private var i : int = 1;
 private var j : int = 1;
 
+private var target:GameObject;
+private var targetWingDeflectorL:GameObject;
+private var targetWingDeflectorR:GameObject;
+private var targetElevonDeflectorL:GameObject;
+private var targetElevonDeflectorR:GameObject;
+
+var avoidDistance : float;
+
 var rayAheadPrev = false;
+var lineAheadPrev = false;
+public static var isNewTarget : boolean = false;
 
 function Start () {
-	GetRailsPoints();
+
 	rigidbody.velocity = Vector3(0,0,targetVel);
+	
+	target = GameObject.FindGameObjectWithTag('TargetObject');
+	targetWingDeflectorL = GameObject.FindGameObjectWithTag('TargetWingDeflectorL');
+	targetWingDeflectorR = GameObject.FindGameObjectWithTag('TargetWingDeflectorR');
+	targetElevonDeflectorL = GameObject.FindGameObjectWithTag('TargetElevonDeflectorL');
+	targetElevonDeflectorR = GameObject.FindGameObjectWithTag('TargetElevonDeflectorR');
+	
+	
+	
 }
 
 function Update () {
+	GetRailsPoints();
+	
+	if (transform.position.z > PlayerPhysics.player.transform.position.z + 500) {
+		isNewTarget = false;
+	}
+	
 
+	if (isNewTarget){
+		targetVel = 1000;
+	}  else if (!KillMode.killMode) {
+		targetVel = 585;
+	}
+
+	
 	CalcSpeed();
+}
+function FixedUpdate(){
 
-	Debug.DrawRay(transform.position, Vector3.forward*30, Color.red);
+	var lineAhead = Physics.Linecast(transform.position, Vector3(transform.position.x, transform.position.y, transform.position.z + avoidDistance));
 	
-
-	var rayAhead = Physics.Raycast(transform.position, transform.TransformDirection (Vector3.forward), 30);
+	Debug.DrawRay(transform.position, Vector3.forward*(avoidDistance), Color.red);
 	
-	if (rayAhead && !rayAheadPrev) {
-		Debug.Log("In update and a collision is detected");
-		Debug.Log("Raycast info: " + rayAhead);
+	if (lineAhead && !lineAheadPrev) {
         AvoidObstacle();
     }
     
-    rayAheadPrev = rayAhead;
+    lineAheadPrev = lineAhead;
 }
 
 function AvoidObstacle() {
@@ -44,25 +75,27 @@ function AvoidObstacle() {
 
 	var iM = 1;
     var jM = 1;
-    var myArrayListI = new ArrayList();    
-	var myArrayListJ = new ArrayList(); 
+    var openRailListI = new ArrayList();    
+	var openRailListJ = new ArrayList(); 
     
   	for (var i=0;i<3;i++){
 		for (var j=0;j<3;j++){
-			var rayAhead = Physics.Raycast(Vector3(railPoints[i,j].x, railPoints[i,j].y, transform.position.z), transform.TransformDirection (Vector3.forward), 30);
-			if (!rayAhead) {
-    			//For now I'm just overwriting iM and jM, soon there will be a list that grows and shrinks depending on number of available rails
-    			myArrayListI.Add(i);
-    			myArrayListJ.Add(j);
+			var lineAhead = Physics.Linecast(Vector3(railPoints[i,j].x, railPoints[i,j].y, transform.position.z), Vector3(railPoints[i,j].x, railPoints[i,j].y, transform.position.z + avoidDistance));
+			if (!lineAhead) {
+    			//Storing all the open (non-obstructed) railpoints in an arraylist
+    			openRailListI.Add(i);
+    			openRailListJ.Add(j);
 			}
 		}
 	}
-	Debug.Log("In AVOID: myArrayListI.Count = " + myArrayListI.Count);
-	iM = myArrayListI[Random.Range(0, myArrayListI.Count)];
-	jM = myArrayListJ[Random.Range(0, myArrayListJ.Count)];
 	
-	//TODO: Chose random potential rail
-	MoveTo(iM,jM);
+	if ( openRailListI.Count!=0 && openRailListJ.Count !=0 ) {
+		iM = openRailListI[Random.Range(0, openRailListI.Count-1)];
+		jM = openRailListJ[Random.Range(0, openRailListJ.Count-1)];
+		
+		//iM and jM are indexes that can be moved to
+		MoveTo(iM,jM);
+	}
 }
 
 function MoveTo(iM : int, jM : int) {
@@ -87,51 +120,54 @@ function MoveTo(iM : int, jM : int) {
 public function MoveLeftOne() {
 	if(j<=2 && j>0){
 		j--;
+		targetWingDeflectorL.animation.Play("player_wingdeflectL_down");
+		targetWingDeflectorR.animation.Play("player_wingdeflectR_up");
+		
+		target.animation.Play("player_left");
 	}
 }
 public function MoveRightOne() {
 	if(j<2 && j>=0){
 		j++;
+		targetWingDeflectorL.animation.Play("player_wingdeflectL_up");
+		targetWingDeflectorR.animation.Play("player_wingdeflectR_down");
+		
+		target.animation.Play("player_right");
 	}
 }
 public function MoveDownOne() {
 	if(i<2 && i>=0){
 		i++;
+		targetElevonDeflectorL.animation.Play("player_elevonL_down");
+		targetElevonDeflectorR.animation.Play("player_elevonR_down");
+		target.animation.Play("player_down");
 	}
 }
 public function MoveUpOne() {
 	if(i<=2 && i>0){
 		i--;
+		targetElevonDeflectorL.animation.Play("player_elevonL_up");
+		targetElevonDeflectorR.animation.Play("player_elevonR_up");
+		target.animation.Play("player_up");
 	}
 }
 
 function CalcSpeed() {
 
-	//Variable to store the last position of i, we'll use these later to avoid lerping to the same spot
-	var iLast : int;
-	var jLast : int;
-
 	rigidbody.velocity = Vector3(0,0,targetVel);
+	rigidbody.position = Vector3.Lerp(transform.position, Vector3(railPoints[i,j].x, railPoints[i,j].y, transform.position.z), Time.deltaTime*smoothTransition);
 
-	//Why change position if we don't need to?
-	if(iLast!=i || jLast!=j ){
-		rigidbody.position = Vector3.Lerp(transform.position, Vector3(railPoints[i,j].x, railPoints[i,j].y, transform.position.z), Time.deltaTime*smoothTransition);
-	}
-
-	iLast = i;
-	jLast = j;
 }
 
 function GetRailsPoints() {
-	railPoints[0, 0]= new Vector2(transform.position.x - spacingX, transform.position.y + spacingY);
-	railPoints[0, 1]= new Vector2(transform.position.x, transform.position.y + spacingY);
-	railPoints[0, 2]= new Vector2(transform.position.x + spacingX, transform.position.y + spacingY);
-	railPoints[1, 0]= new Vector2(transform.position.x - spacingX, transform.position.y);
-	railPoints[1, 1]= new Vector2(transform.position.x, transform.position.y);
-	railPoints[1, 2]= new Vector2(transform.position.x + spacingX, transform.position.y);
-	railPoints[2, 0]= new Vector2(transform.position.x - spacingX, transform.position.y - spacingY);
-	railPoints[2, 1]= new Vector2(transform.position.x, transform.position.y - spacingY);
-	railPoints[2, 2]= new Vector2(transform.position.x + spacingX, transform.position.y - spacingY);
+	railPoints[0, 0]= PlayerPhysics.railPoints[0, 0];
+	railPoints[0, 1]= PlayerPhysics.railPoints[0, 1];
+	railPoints[0, 2]= PlayerPhysics.railPoints[0, 2];
+	railPoints[1, 0]= PlayerPhysics.railPoints[1, 0];
+	railPoints[1, 1]= PlayerPhysics.railPoints[1, 1];
+	railPoints[1, 2]= PlayerPhysics.railPoints[1, 2];
+	railPoints[2, 0]= PlayerPhysics.railPoints[2, 0];
+	railPoints[2, 1]= PlayerPhysics.railPoints[2, 1];
+	railPoints[2, 2]= PlayerPhysics.railPoints[2, 2];
 }
-
 
