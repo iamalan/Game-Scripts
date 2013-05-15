@@ -2,6 +2,11 @@
 
 private var player : GameObject;
 
+private var mainOptions:GUITexture;
+private var mainTapToPlay:GUITexture;
+private var mainTitle:GUITexture;
+private var mainBackground:GUITexture;
+
 private var pauseScreen : GameObject;
 private var deathScreen : GameObject;
 
@@ -42,6 +47,11 @@ function Start () {
 	bonusScore=bonusScoreMax;
 	bonusScoreText=GameObject.FindGameObjectWithTag('BonusScoreText').guiText;
 	
+	mainOptions=GameObject.FindGameObjectWithTag('MainOptions').guiTexture;
+	mainTapToPlay=GameObject.FindGameObjectWithTag('MainTapToPlay').guiTexture;
+	mainTitle=GameObject.FindGameObjectWithTag('MainTitle').guiTexture;
+	mainBackground=GameObject.FindGameObjectWithTag('MainBackground').guiTexture;
+
 	player = GameObject.FindGameObjectWithTag('PlayerObject');
 		
 	pauseScreen=GameObject.FindGameObjectWithTag('PauseScreen');
@@ -73,6 +83,11 @@ function Start () {
 	
 	pauseScreen.active=false;
 	deathScreen.active=false;
+	mainOptions.active=false;
+	mainTapToPlay.active=false;
+	mainTitle.active=false;
+	mainBackground.active=false;
+	
 	
 	Score=0;
 	GUIScore.text=String.Format("{0}", Score);	
@@ -83,22 +98,34 @@ function Start () {
 function Update () {
 
 	if(MenuScreen.isMenu){
-		pauseButton.active=false;
-		guiHud.active=false;
-		GUIScore.active=false;
+		pauseButton.active=true;
+		guiHud.active=true;
+		GUIScore.active=true;
 		bonusScoreText.active=false;
-		guiCoinScore.active=false;
+		guiCoinScore.active=true;
 		
-		//Change this so that user taps plane rather than any old tap
-		if(Input.GetMouseButtonDown(0)){
+		mainOptions.active=true;
+		mainTapToPlay.active=true;
+		mainTitle.active=true;
+		mainBackground.active=true;
+		
+				
+		//Main Menu Script
+		if (Input.touchCount > 0){
 			MenuScreen.isMenu = false;
 			SmoothFollow.height = 15;
+			SmoothFollow.distance = 40;
+			mainOptions.active=false;
+			mainTapToPlay.active=false;
+			mainTitle.active=false;
+			mainBackground.active=false;
 		}
+
 		//menu.active = true;
 	}else{
 		
 		//DEATH SCREEN - Replace this IF statement later
-		if (player.transform.position.z>40000) {
+		if (player.transform.position.z>70000) {
 				deathScreen.active=true;	
 				deathEnabled=true;
 				Time.timeScale = 0.0;
@@ -176,25 +203,7 @@ function Update () {
 				}
 			}
 	
-			//Death > Menu
-			if (deathMenu1.HitTest (touch.position) && deathEnabled==true) {
-				if(touch.phase == TouchPhase.Began) {
-					deathMenu2.active=true;
-					deathMenu1.active=false;
-				}
-				if(touch.phase == TouchPhase.Ended) {
-					Application.LoadLevel(0);
-					deathScreen.active=false;
-					deathMenu2.active=false;
-					deathMenu1.active=true;
-					deathTargetsEliminated.active=false;
-					deathCoinsCollected.active=false;
-					deathDistanceTravelled.active=false;
-				}
-			
-			}
-			
-			//Death>Restart
+			//Death > Restart
 			if (deathRestart1.HitTest (touch.position) && deathEnabled==true) {
 				if(touch.phase == TouchPhase.Began) {
 					deathRestart2.active=true;
@@ -202,8 +211,35 @@ function Update () {
 				}
 				if(touch.phase == TouchPhase.Ended) {
 					Application.LoadLevel(0);
-					//Call reset game state like this not like this: ResetGameState()
 					ResetGameState.ResetGameState();
+					
+					deathScreen.active=false;
+					deathRestart2.active=false;
+					deathRestart1.active=true;
+					deathTargetsEliminated.active=false;
+					deathCoinsCollected.active=false;
+					deathDistanceTravelled.active=false;
+					//Now pretend we touched the button
+//					MenuScreen.isMenu = false;
+//					SmoothFollow.height = 15;
+//					SmoothFollow.distance = 40;
+//					mainOptions.active=false;
+//					mainTapToPlay.active=false;
+//					mainTitle.active=false;
+//					mainBackground.active=false;
+				}
+			}
+			
+			//Death>Menu
+			if (deathMenu1.HitTest (touch.position) && deathEnabled==true) {
+				if(touch.phase == TouchPhase.Began) {
+					deathMenu2.active=true;
+					deathMenu1.active=false;
+				}
+				if(touch.phase == TouchPhase.Ended) {
+					Application.LoadLevel(0);
+					ResetGameState.ResetGameState();
+					
 					deathScreen.active=false;
 					deathRestart2.active=false;
 					deathRestart1.active=true;

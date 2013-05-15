@@ -36,7 +36,7 @@ function Start () {
 function Update () {
 	
 	//Only change deltaX/Y if the isDelta tag is true and  we're at ASF even
-	if ( TerrainGen.activatedSoFar%2==0 && Time.time > 3.0 && isDelta && !KillMode.killMode ) {
+	if ( TerrainGen.activatedSoFar%2==0 && isDelta && !KillMode.killMode && !MenuScreen.isMenu  ) {
 		if(isDelta){
 			deltaX = 0.0004*Random.Range(-1,2);
 			deltaY = 0.0004*Random.Range(-1,2);
@@ -51,11 +51,11 @@ function Update () {
 	}
 
 	//Actually apply the deltas to the x and y offset values when they are within bounds set by user
-	if( (Offset.x > deltaXLimit && deltaX < 0) || (Offset.x < -deltaXLimit && deltaX > 0) || (Offset.x < deltaXLimit && Offset.x > -deltaXLimit)){
+	if( (Offset.x > deltaXLimit && deltaX < 0) || (Offset.x < -deltaXLimit && deltaX > 0) || (Offset.x < deltaXLimit && Offset.x > -deltaXLimit) && Time.timeScale == 1.0){
 		Offset.x = Offset.x + deltaX;
 	}
 	
-	if( (Offset.y > deltaYLimit && deltaY < 0) || (Offset.y < -deltaYLimit && deltaY > 0) || (Offset.y < deltaYLimit && Offset.y > -deltaYLimit)){
+	if( (Offset.y > deltaYLimit && deltaY < 0) || (Offset.y < -deltaYLimit && deltaY > 0) || (Offset.y < deltaYLimit && Offset.y > -deltaYLimit) && Time.timeScale == 1.0){
 		Offset.y = Offset.y + deltaY;
 	}
 	
@@ -77,6 +77,8 @@ function Update () {
 	
 	
 	for (var M : Material in Mats) {
-    	M.SetVector("_QOffset",Offset);
+    	if(Time.timeScale==1.0){
+    		M.SetVector("_QOffset",Offset);
+    	}
     }
 }

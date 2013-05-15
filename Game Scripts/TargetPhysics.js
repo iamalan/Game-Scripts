@@ -42,7 +42,8 @@ function Start () {
 function Update () {
 	GetRailsPoints();
 	
-	if (transform.position.z > PlayerPhysics.player.transform.position.z + 500) {
+	//Right now its linearly increasing the target instatiation distance, MAY change to quadratic
+	if (transform.position.z > PlayerPhysics.player.transform.position.z + EnemyRespawn.targetsShotDown*400) {
 		isNewTarget = false;
 	}
 	
@@ -60,7 +61,6 @@ function FixedUpdate(){
 
 	var lineAhead = Physics.Linecast(transform.position, Vector3(transform.position.x, transform.position.y, transform.position.z + avoidDistance));
 	
-	Debug.DrawRay(transform.position, Vector3.forward*(avoidDistance), Color.red);
 	
 	if (lineAhead && !lineAheadPrev) {
         AvoidObstacle();
