@@ -5,7 +5,7 @@
 
 #pragma strict
 
-public static var targetVel = 585.0;
+public static var targetVel :int = 585;
 var smoothTransition = 5.0;
 var railPoints : Vector2[,] = new Vector2[3, 3];
 var spacingX : int;
@@ -43,7 +43,7 @@ function Update () {
 	GetRailsPoints();
 	
 	//Right now its linearly increasing the target instatiation distance, MAY change to quadratic
-	if (transform.position.z > PlayerPhysics.player.transform.position.z + EnemyRespawn.targetsShotDown*400) {
+	if (transform.position.z > PlayerPhysics.player.transform.position.z + 400 + EnemyRespawn.targetsShotDown*300) {
 		isNewTarget = false;
 	}
 	
@@ -51,7 +51,7 @@ function Update () {
 	if (isNewTarget){
 		targetVel = 1000;
 	}  else if (!KillMode.killMode) {
-		targetVel = 585;
+		targetVel = PlayerPhysics.playerVel - 15;
 	}
 
 	

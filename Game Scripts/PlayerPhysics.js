@@ -1,6 +1,6 @@
 #pragma strict
 
-public static var playerVel : float;
+public static var playerVel : int;
 public var spacingX : int;
 public var spacingY : int;
 public var lockOnRange : int;
@@ -115,7 +115,7 @@ function ArmMissile() {
 		KillMode.killMode = true;
 		
 		if(ScoreController.fireMissile){
-			Instantiate (missile, Vector3(player.transform.position.x+12.8,player.transform.position.y,player.transform.position.z+10), Quaternion.identity);
+			Instantiate (missile, Vector3(player.transform.position.x+15.3,player.transform.position.y-1,player.transform.position.z+13), Quaternion.identity);
 			isFired = true;
 		}
 	}

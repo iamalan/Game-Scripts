@@ -23,7 +23,9 @@ function Update () {
 		TargetPhysics.isNewTarget = true;
 		PlayerPhysics.isFired = false;
 		KillMode.killMode = false; 
-		killTime = Time.time;		
+		killTime = Time.time;
+		//Speed up to increase difficulty
+		PlayerPhysics.playerVel = PlayerPhysics.playerVel + 10;		
 	} 
 }
 
