@@ -35,8 +35,6 @@ function Start () {
 	targetElevonDeflectorL = GameObject.FindGameObjectWithTag('TargetElevonDeflectorL');
 	targetElevonDeflectorR = GameObject.FindGameObjectWithTag('TargetElevonDeflectorR');
 	
-	
-	
 }
 
 function Update () {
