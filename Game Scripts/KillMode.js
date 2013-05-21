@@ -4,6 +4,12 @@ public static var killMode : boolean = false;
 private var smoothTransition : int = 2;
 public var curveController : GameObject;
 
+function Start() {
+
+	killMode = false;
+
+}
+
 function Update () {
 	
 	if(killMode){

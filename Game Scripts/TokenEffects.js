@@ -4,8 +4,8 @@
 private var speedBoost:GameObject;
 private var shieldBoost:GameObject;
 private var coin:GameObject;
-private var BoostMode:boolean;
-private var ShieldMode:boolean;
+public static var BoostMode:boolean;
+public static var ShieldMode:boolean;
 private var playerVelInitial:float;
 private var playerShield:GameObject;
 private var playerBoost:GameObject;
@@ -35,6 +35,8 @@ function Start () {
 	playerBoost=GameObject.FindGameObjectWithTag('BoostPlayer');
 	playerShield.active=false;
 	playerBoost.active=false;
+	
+	BoostMode=false;
 	
 	coins=0;
 	
@@ -71,7 +73,9 @@ function Update () {
 				playerShield.active=true;
 				
 				if(Mathf.Abs((shieldBoostStart - Time.time))>PlayerPrefs.GetInt("shieldScore")) {
-					playerShield.active=false;  	
+					playerShield.active=false;
+					ShieldMode=false;
+					  	
 					}
 		
 		
@@ -120,7 +124,7 @@ function Update () {
 	     
 		      	//coin = GameObject.FindGameObjectWithTag('Coin'); 
 				collider.gameObject.SetActive(false);
-				coinParticleClone=Instantiate (CoinParticle, Vector3(collider.transform.position.x,collider.transform.position.y,collider.transform.position.z-0), transform.rotation);
+				coinParticleClone=Instantiate (CoinParticle, Vector3(collider.transform.position.x,collider.transform.position.y,collider.transform.position.z+50), transform.rotation);
 		   		coinParticleClone.GetComponent('ParticleSystem').particleSystem.Play();
 		   		coins++;
 	       }
